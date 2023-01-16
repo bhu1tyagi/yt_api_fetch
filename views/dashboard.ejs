@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Youtube Videos Dashboard</title>
+</head>
+<body>
+    <h1>Stored Videos</h1>
+
+    <form action="/videos/search" method="get">
+        <input type="text" name="q" placeholder="Search by title or description">
+        <input type="submit" value="Search">
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Published At</th>
+                <th>Thumbnails</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% videos.forEach(function(video) { %>
+                <tr>
+                    <td><%= video.title %></td>
+                    <td><%= video.description %></td>
+                    <td><%= video.publishedAt %></td>
+                    <td>
+                        <img src="<%= video.thumbnails.default.url %>" width="<%= video.thumbnails.default.width %>" height="<%= video.thumbnails.default.height %>">
+                    </td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+
+</body>
+</html>

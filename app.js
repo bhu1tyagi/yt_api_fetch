@@ -6,8 +6,11 @@ const Video = require('./db');
 const app = express();
 const PORT = 3000;
 
-const API_KEY = 'YOUR_API_KEY';
+const API_KEY = 'AIzaSyCzI3UQPHd3CE3yu4IjHDSU2fkGseBGrTc';
 const API_URL = 'https://www.googleapis.com/youtube/v3/search';
+
+app.set('view engine', 'ejs');
+// app.set('/views', path.join(__dirname, '/views'));
 
 app.get('/videos', (req, res) => {
     const searchQuery = req.query.q;
@@ -56,7 +59,7 @@ app.get('/videos', (req, res) => {
 app.get('/videos/stored', (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-
+    
     Video.find({})
         .sort({ publishedAt: -1 })
         .skip((page - 1) * limit)
@@ -87,6 +90,17 @@ app.get('/videos/search', (req, res) => {
             }
         });
 });
+
+app.get('/dashboard', (req, res) => {
+    Video.find({}, (err, videos) => {
+        if (err) {
+            res.status(500).json({ error: 'Failed to fetch stored videos from database.' });
+        } else {
+            res.render('dashboard', { videos: videos });
+        }
+    });
+});
+
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
