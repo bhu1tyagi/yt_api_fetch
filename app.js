@@ -1,7 +1,10 @@
+//import all the necessary libraries and files
 const express = require('express');
 const request = require('request-promise');
 const async = require('async');
 const Video = require('./db');
+const mongoose = require('mongoose');
+const path = require('path');
 
 const app = express();
 const PORT = 3000;
@@ -9,9 +12,27 @@ const PORT = 3000;
 const API_KEY = 'AIzaSyCzI3UQPHd3CE3yu4IjHDSU2fkGseBGrTc';
 const API_URL = 'https://www.googleapis.com/youtube/v3/search';
 
-app.set('view engine', 'ejs');
-// app.set('/views', path.join(__dirname, '/views'));
+//mongodb database connection setup by using mongoose
+async function connect() {
+    try {
+      const url = 'mongodb+srv://bhu1tyagi:Tyagi%401234@youtubevideos.isvyiho.mongodb.net/?retryWrites=true&w=majority' || 'mongodb://127.0.0.1:27017/youtubevideos';
+      await mongoose.connect(url, {
+        useUnifiedTopology: true,
+        useNewUrlParser: true,
+      });
+      console.log('Connected to \x1b[32mDatabase\x1b[0m');
+      return 0;
+    } catch (err) {
+      console.log('ERROR: Could not connect to database: ', err);
+      process.exit(1);
+    }
+}
+connect();
 
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+//get API to get videos by using API_URL and API_URL
 app.get('/videos', (req, res) => {
     const searchQuery = req.query.q;
     const pageToken = req.query.pageToken;
@@ -56,6 +77,7 @@ app.get('/videos', (req, res) => {
         });
 });
 
+//API to get the stored data in paginated response
 app.get('/videos/stored', (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -73,13 +95,25 @@ app.get('/videos/stored', (req, res) => {
         });
 });
 
+//Dashboard API
+app.get('/dashboard', (req, res) => {
+    Video.find({}, (err, videos) => {
+        if (err) {
+            res.status(500).json({ error: 'Failed to fetch stored videos from database.' });
+        } else {
+            res.render('dashboard', { videos: videos });
+        }
+    });
+});
+
+//search API to search the stored videos using their title and description
 app.get('/videos/search', (req, res) => {
     const searchQuery = req.query.q;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
-    Video.find({ $text: { $search: searchQuery } })
-        .sort({ publishedAt: -1 })
+    Video.find({ $text: { $search: searchQuery } }, { score: { $meta: "textScore" } })
+        .sort({ score: { $meta: "textScore" }, publishedAt: -1 })
         .skip((page - 1) * limit)
         .limit(limit)
         .exec((err, videos) => {
@@ -91,17 +125,7 @@ app.get('/videos/search', (req, res) => {
         });
 });
 
-app.get('/dashboard', (req, res) => {
-    Video.find({}, (err, videos) => {
-        if (err) {
-            res.status(500).json({ error: 'Failed to fetch stored videos from database.' });
-        } else {
-            res.render('dashboard', { videos: videos });
-        }
-    });
-});
-
-
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server started on port ${PORT}`);
 });
+

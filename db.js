@@ -2,11 +2,6 @@
 
 const mongoose = require('mongoose');
 
-mongoose.connect('mongodb://127.0.0.1:27017/youtubevideos', { 
-    useNewUrlParser: true, 
-    useUnifiedTopology: true 
-});
-
 const videoSchema = new mongoose.Schema({
     title: String,
     description: String,
@@ -31,5 +26,10 @@ const videoSchema = new mongoose.Schema({
 });
 videoSchema.index({ title: 'text', description: 'text' });
 const Video = mongoose.model('Video', videoSchema);
+
+Video.createIndexes({
+    title: 'text',
+    description: 'text'
+});
 
 module.exports = Video;
